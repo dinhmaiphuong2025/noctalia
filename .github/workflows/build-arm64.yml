@@ -28,8 +28,7 @@ jobs:
             libcairo2-dev libpango1.0-dev libharfbuzz-dev \
             libxkbcommon-dev libglib2.0-dev \
             libsecret-1-dev libsodium-dev \
-            libsdbus-c++-dev libpipewire-0.3-dev \
-            libwireplumber-dev \
+            libsdbus-c++-dev libpipewire-0.3-dev libwireplumber-0.5-dev \
             libpam0g-dev libpolkit-agent-1-dev libpolkit-gobject-1-dev \
             libwebp-dev libjxl-dev libsndfile1-dev librsvg2-dev \
             libqalculate-dev libxml2-dev \
@@ -42,11 +41,15 @@ jobs:
       - name: Build
         run: ninja -C build
 
+      - name: Install to staging
+        run: DESTDIR=$(pwd)/install ninja -C build install
+
       - name: Create artifact
         run: |
-          DESTDIR=$(pwd)/install ninja -C build install
           cd $(pwd)/install
           tar czf ../noctalia-arm64.tar.gz .
+          cd ..
+          ls -lh noctalia-arm64.tar.gz
 
       - uses: actions/upload-artifact@v4
         with:
