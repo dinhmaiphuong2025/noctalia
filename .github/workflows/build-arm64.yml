@@ -59,11 +59,10 @@ jobs:
         run: |
           git clone --depth 1 --branch v2.3.1 https://github.com/Kistler-Group/sdbus-cpp.git /tmp/sdbus-cpp
           cd /tmp/sdbus-cpp
-          meson setup build --prefix=/usr
-          ninja -C build
-          sudo ninja -C build install
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build -j$(nproc)
+          sudo cmake --install build
           sudo ldconfig
-          pkg-config --modversion sdbus-c++
 
       - name: Install stb headers
         run: |
