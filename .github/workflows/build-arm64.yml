@@ -28,7 +28,8 @@ jobs:
             libcairo2-dev libpango1.0-dev libharfbuzz-dev \
             libxkbcommon-dev libglib2.0-dev \
             libsecret-1-dev libsodium-dev \
-            libsdbus-c++-dev libpipewire-0.3-dev libwireplumber-0.5-dev \
+            libsdbus-c++-dev libpipewire-0.3-dev \
+            libwireplumber-dev \
             libpam0g-dev libpolkit-agent-1-dev libpolkit-gobject-1-dev \
             libwebp-dev libjxl-dev libsndfile1-dev librsvg2-dev \
             libqalculate-dev libxml2-dev \
