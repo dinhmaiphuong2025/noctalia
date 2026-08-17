@@ -48,6 +48,12 @@ jobs:
           sudo ldconfig
           pkg-config --modversion wireplumber-0.5
 
+      - name: Install stb headers
+        run: |
+          sudo curl -L -o /usr/include/stb/stb_image_resize2.h https://raw.githubusercontent.com/nothings/stb/master/stb_image_resize2.h
+          sudo curl -L -o /usr/include/stb/stb_image_write.h https://raw.githubusercontent.com/nothings/stb/master/stb_image_write.h
+          sudo curl -L -o /usr/include/stb/stb_image.h https://raw.githubusercontent.com/nothings/stb/master/stb_image.h
+
       - name: Setup meson
         run: meson setup build --prefix=/usr --buildtype=release
 
