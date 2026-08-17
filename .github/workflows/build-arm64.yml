@@ -1,0 +1,54 @@
+name: build-arm64
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build noctalia (arm64)
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            meson g++ just ninja-build \
+            libwayland-dev wayland-protocols \
+            libegl-dev libgles-dev \
+            libfreetype-dev libfontconfig-dev \
+            libcairo2-dev libpango1.0-dev libharfbuzz-dev \
+            libxkbcommon-dev libglib2.0-dev \
+            libsecret-1-dev libsodium-dev \
+            libsdbus-c++-dev libpipewire-0.3-dev libwireplumber-0.5-dev \
+            libpam0g-dev libpolkit-agent-1-dev libpolkit-gobject-1-dev \
+            libwebp-dev libjxl-dev libsndfile1-dev librsvg2-dev \
+            libqalculate-dev libxml2-dev \
+            libmd4c-dev libtomlplusplus-dev libical-dev \
+            nlohmann-json3-dev libstb-dev libjemalloc-dev
+
+      - name: Setup meson
+        run: meson setup build --prefix=/usr --buildtype=release
+
+      - name: Build
+        run: ninja -C build
+
+      - name: Create artifact
+        run: |
+          DESTDIR=$(pwd)/install ninja -C build install
+          cd $(pwd)/install
+          tar czf ../noctalia-arm64.tar.gz .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: noctalia-arm64
+          path: noctalia-arm64.tar.gz
+          if-no-files-found: error
