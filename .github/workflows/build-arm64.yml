@@ -55,6 +55,16 @@ jobs:
           sudo ldconfig
           pkg-config --modversion wireplumber-0.5
 
+      - name: Build & install sdbus-c++ v2.3.1
+        run: |
+          git clone --depth 1 --branch v2.3.1 https://github.com/Kistler-Group/sdbus-cpp.git /tmp/sdbus-cpp
+          cd /tmp/sdbus-cpp
+          meson setup build --prefix=/usr
+          ninja -C build
+          sudo ninja -C build install
+          sudo ldconfig
+          pkg-config --modversion sdbus-c++
+
       - name: Install stb headers
         run: |
           sudo curl -L -o /usr/include/stb/stb_image_resize2.h https://raw.githubusercontent.com/nothings/stb/master/stb_image_resize2.h
