@@ -17,6 +17,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Patch wl_proxy_get_display (removed in Wayland 1.22)
+        run: |
+          python3 -c "
+          import re
+          with open('src/wayland/virtual_keyboard_service.cpp', 'r') as f:
+              content = f.read()
+          # Remove the wl_proxy_get_display block
+          pattern = r'\n\s+auto\* display = wl_proxy_get_display.*?\n\s+if \(display != nullptr\) \{\n\s+\(void\)wl_display_flush\(display\);\n\s+\}'
+          content = re.sub(pattern, '', content, flags=re.DOTALL)
+          with open('src/wayland/virtual_keyboard_service.cpp', 'w') as f:
+              f.write(content)
+          print('Patched virtual_keyboard_service.cpp')
+          "
+
       - name: Install dependencies
         run: |
           sudo apt-get update -y
