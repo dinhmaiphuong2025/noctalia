@@ -69,17 +69,39 @@ namespace {
     if (implementer != "0x41") {
       return i18n::tr("system.hardware.unknown-cpu");
     }
-    if (part == "0xd46" || part == "0xd47" || part == "0xd4d" || part == "0xd4e") return "Snapdragon 8 Gen 2";
-    if (part == "0xd45") return "Snapdragon 8 Gen 1";
-    if (part == "0xd4b") return "Snapdragon 8 Gen 1";
-    if (part == "0xd40" || part == "0xd41") return "Snapdragon 8cx Gen 3";
-    if (part == "0xd4a") return "Snapdragon 8 Gen 3";
-    if (part == "0xd05") return "Cortex-A76";
-    if (part == "0xd0a") return "Cortex-A77";
-    if (part == "0xd0b") return "Cortex-A78";
-    if (part == "0xd0d") return "Cortex-A55";
-    if (part == "0xd08") return "Cortex-A72";
-    if (part == "0xd07") return "Cortex-A57";
+    if (part == "0xd46" || part == "0xd47" || part == "0xd4d" || part == "0xd4e") {
+      return "Snapdragon 8 Gen 2";
+    }
+    if (part == "0xd45") {
+      return "Snapdragon 8 Gen 1";
+    }
+    if (part == "0xd4b") {
+      return "Snapdragon 8 Gen 1";
+    }
+    if (part == "0xd40" || part == "0xd41") {
+      return "Snapdragon 8cx Gen 3";
+    }
+    if (part == "0xd4a") {
+      return "Snapdragon 8 Gen 3";
+    }
+    if (part == "0xd05") {
+      return "Cortex-A76";
+    }
+    if (part == "0xd0a") {
+      return "Cortex-A77";
+    }
+    if (part == "0xd0b") {
+      return "Cortex-A78";
+    }
+    if (part == "0xd0d") {
+      return "Cortex-A55";
+    }
+    if (part == "0xd08") {
+      return "Cortex-A72";
+    }
+    if (part == "0xd07") {
+      return "Cortex-A57";
+    }
     return i18n::tr("system.hardware.unknown-cpu");
   }
 
