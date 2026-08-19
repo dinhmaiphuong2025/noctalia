@@ -18,6 +18,8 @@
 
 namespace {
 
+  std::string armCpuLabel(const std::string& implementer, const std::string& part);
+
   std::string readCpuModel() {
     std::ifstream file{"/proc/cpuinfo"};
     if (!file.is_open()) {
@@ -25,6 +27,7 @@ namespace {
     }
 
     std::string line;
+    std::string implementer, part;
     while (std::getline(file, line)) {
       if (line.starts_with("model name")) {
         const auto colonPos = line.find(':');
@@ -32,7 +35,37 @@ namespace {
           return StringUtils::trim(line.substr(colonPos + 1));
         }
       }
+      if (line.starts_with("CPU implementer")) {
+        const auto colonPos = line.find(':');
+        if (colonPos != std::string::npos) {
+          implementer = StringUtils::trim(line.substr(colonPos + 1));
+        }
+      }
+      if (line.starts_with("CPU part")) {
+        const auto colonPos = line.find(':');
+        if (colonPos != std::string::npos) {
+          part = StringUtils::trim(line.substr(colonPos + 1));
+        }
+      }
     }
+    return armCpuLabel(implementer, part);
+  }
+
+  // ARMv8 / AArch64 SoC part IDs from linux/arm64 cpuinfo (implementer 0x41 = ARM).
+  std::string armCpuLabel(const std::string& implementer, const std::string& part) {
+    if (implementer != "0x41") {
+      return i18n::tr("system.hardware.unknown-cpu");
+    }
+    if (part == "0xd46") return "Snapdragon 8 Gen 2";
+    if (part == "0xd45") return "Snapdragon 8 Gen 1";
+    if (part == "0xd40" || part == "0xd41") return "Snapdragon 8cx Gen 3";
+    if (part == "0xd4a") return "Snapdragon 8 Gen 3";
+    if (part == "0xd05") return "Cortex-A76";
+    if (part == "0xd0a") return "Cortex-A77";
+    if (part == "0xd0b") return "Cortex-A78";
+    if (part == "0xd0d") return "Cortex-A55";
+    if (part == "0xd08") return "Cortex-A72";
+    if (part == "0xd07") return "Cortex-A57";
     return i18n::tr("system.hardware.unknown-cpu");
   }
 
