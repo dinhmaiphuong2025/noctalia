@@ -85,13 +85,19 @@ jobs:
           sudo curl -L -o /usr/include/stb/stb_image.h https://raw.githubusercontent.com/nothings/stb/master/stb_image.h
 
       - name: Setup meson
-        run: meson setup build --prefix=/usr --buildtype=release
+        run: meson setup build --prefix=/usr/local --buildtype=release
 
       - name: Build
         run: ninja -C build
 
       - name: Install to staging
-        run: DESTDIR=$(pwd)/install ninja -C build install
+        run: |
+          DESTDIR=$(pwd)/install ninja -C build install
+          # Also ensure assets are mirrored in /usr/share for compatibility
+          mkdir -p $(pwd)/install/usr/share
+          cp -r $(pwd)/install/usr/local/share/noctalia $(pwd)/install/usr/share/ 2>/dev/null || true
+          mkdir -p $(pwd)/install/usr/bin
+          ln -sf /usr/local/bin/noctalia $(pwd)/install/usr/bin/noctalia
 
       - name: Create artifact
         run: |
