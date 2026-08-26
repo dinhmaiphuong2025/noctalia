@@ -159,3 +159,12 @@ void AnimationManager::tick(float /*deltaMs*/) {
 }
 
 bool AnimationManager::hasActive() const { return !m_animations.empty(); }
+
+bool AnimationManager::hasActiveOwner(const void* owner) const {
+  if (owner == nullptr) {
+    return false;
+  }
+  return std::ranges::any_of(m_animations, [owner](const Entry& e) {
+    return e.owner == owner && !e.animation.finished;
+  });
+}

@@ -37,6 +37,7 @@ public:
   void cancelForOwner(const void* owner);
   void tick(float deltaMs);
   [[nodiscard]] bool hasActive() const;
+  [[nodiscard]] bool hasActiveOwner(const void* owner) const;
 
 private:
   struct Entry {

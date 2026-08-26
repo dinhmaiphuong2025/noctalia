@@ -2699,9 +2699,11 @@ void PanelManager::prepareFrame(bool needsUpdate, bool needsLayout) {
   const auto height = m_surface->height();
 
   // If a reveal animation is currently in flight, skip rebuild/relayout to avoid
-  // dropping frames during the sliding transition.
-  const bool isAnimatingReveal = (m_attachedToBar && m_attachedRevealProgress < 0.999F)
-      || (!m_attachedToBar && m_detachedRevealProgress < 0.999F);
+  // dropping frames during the sliding transition. Track by animation owner node.
+  const void* revealOwner = m_attachedToBar
+      ? static_cast<const void*>(m_attachedRevealClipNode)
+      : static_cast<const void*>(m_sceneRoot.get());
+  const bool isAnimatingReveal = m_animations.hasActiveOwner(revealOwner);
 
   const bool needsSceneBuild = m_sceneRoot == nullptr
       || (!isAnimatingReveal && (static_cast<std::uint32_t>(std::round(m_sceneRoot->width())) != width
