@@ -111,3 +111,18 @@ jobs:
           name: noctalia-arm64
           path: noctalia-arm64.tar.gz
           if-no-files-found: error
+
+      - name: Publish rolling release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete noctalia-arm64 --repo ${{ github.repository }} --yes 2>/dev/null || true
+          git tag -d noctalia-arm64 2>/dev/null || true
+          git push --delete origin noctalia-arm64 2>/dev/null || true
+          gh release create noctalia-arm64 \
+            --repo ${{ github.repository }} \
+            --title "noctalia-arm64 (Rolling)" \
+            --notes "Rolling release artifact compiled from $(git rev-parse --short HEAD)" \
+            --latest=false \
+            noctalia-arm64.tar.gz
