@@ -56,101 +56,107 @@ void main() {
 )";
 
   constexpr char kFragmentShaderSource[] = R"(
-precision highp float;
+precision mediump float;
 
 uniform sampler2D u_texture;
-uniform vec4 u_tint;
+uniform lowp vec4 u_tint;
 uniform int u_monochrome;
 uniform int u_alpha_mask;
-uniform float u_opacity;
-uniform vec2 u_size;
-uniform float u_radius;
-uniform vec4 u_border_color;
-uniform float u_border_width;
+uniform lowp float u_opacity;
+uniform highp vec2 u_size;
+uniform highp float u_radius;
+uniform lowp vec4 u_border_color;
+uniform highp float u_border_width;
 uniform int u_scrim_enabled;
-uniform vec2 u_scrim_direction;
-uniform vec4 u_scrim_stops;
-uniform vec4 u_scrim_color0;
-uniform vec4 u_scrim_color1;
-uniform vec4 u_scrim_color2;
-uniform vec4 u_scrim_color3;
-varying vec2 v_texcoord;
-varying vec2 v_local;
+uniform mediump vec2 u_scrim_direction;
+uniform mediump vec4 u_scrim_stops;
+uniform lowp vec4 u_scrim_color0;
+uniform lowp vec4 u_scrim_color1;
+uniform lowp vec4 u_scrim_color2;
+uniform lowp vec4 u_scrim_color3;
+varying highp vec2 v_texcoord;
+varying highp vec2 v_local;
 
-float rounded_rect_distance(vec2 centered, vec2 half_size, float radius) {
-    vec2 q = abs(centered) - (half_size - vec2(radius));
+highp float rounded_rect_distance(highp vec2 centered, highp vec2 half_size, highp float radius) {
+    highp vec2 q = abs(centered) - (half_size - vec2(radius));
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 }
 
-float scrim_segment_t(float position, float start, float end) {
+mediump float scrim_segment_t(mediump float position, mediump float start, mediump float end) {
     return clamp((position - start) / max(end - start, 0.0001), 0.0, 1.0);
 }
 
-vec4 scrim_fill(float position) {
-    vec4 stops = clamp(u_scrim_stops, vec4(0.0), vec4(1.0));
+lowp vec4 scrim_fill(mediump float position) {
+    mediump vec4 stops = clamp(u_scrim_stops, vec4(0.0), vec4(1.0));
     stops.y = max(stops.y, stops.x);
     stops.z = max(stops.z, stops.y);
     stops.w = max(stops.w, stops.z);
 
+    lowp vec4 c0 = u_scrim_color0;
+    lowp vec4 c1 = u_scrim_color1;
+    lowp vec4 c2 = u_scrim_color2;
+    lowp vec4 c3 = u_scrim_color3;
+
     if (position <= stops.y) {
-        return mix(u_scrim_color0, u_scrim_color1, scrim_segment_t(position, stops.x, stops.y));
+        return mix(c0, c1, scrim_segment_t(position, stops.x, stops.y));
     }
     if (position <= stops.z) {
-        return mix(u_scrim_color1, u_scrim_color2, scrim_segment_t(position, stops.y, stops.z));
+        return mix(c1, c2, scrim_segment_t(position, stops.y, stops.z));
     }
-    return mix(u_scrim_color2, u_scrim_color3, scrim_segment_t(position, stops.z, stops.w));
+    return mix(c2, c3, scrim_segment_t(position, stops.z, stops.w));
 }
 
 void main() {
-    float aa = 0.85;
-    float radius = min(u_radius, min(u_size.x, u_size.y) * 0.5);
-    vec2 centered = v_local - u_size * 0.5;
-    float outer_distance = rounded_rect_distance(centered, u_size * 0.5, radius);
-    float outer_coverage = 1.0 - smoothstep(-aa, aa, outer_distance);
+    highp float aa = 0.85;
+    highp float radius = min(u_radius, min(u_size.x, u_size.y) * 0.5);
+    highp vec2 centered = v_local - u_size * 0.5;
+    highp float outer_distance = rounded_rect_distance(centered, u_size * 0.5, radius);
+    lowp float outer_coverage = 1.0 - smoothstep(-aa, aa, outer_distance);
     if (outer_coverage <= 0.0) {
-        discard;
+        gl_FragColor = vec4(0.0);
+        return;
     }
 
-    vec2 sample_uv = clamp(v_texcoord, vec2(0.0), vec2(1.0));
-    vec4 texel = texture2D(u_texture, sample_uv);
+    highp vec2 sample_uv = clamp(v_texcoord, vec2(0.0), vec2(1.0));
+    lowp vec4 texel = texture2D(u_texture, sample_uv);
     if (v_texcoord.x < 0.0 || v_texcoord.x > 1.0 || v_texcoord.y < 0.0 || v_texcoord.y > 1.0) {
         texel = vec4(0.0);
     }
-    vec4 fill;
+    lowp vec4 fill;
     if (u_monochrome != 0) {
-        float coverage = u_alpha_mask != 0 ? texel.a : dot(texel.rgb, vec3(0.299, 0.587, 0.114)) * texel.a;
+        lowp float coverage = u_alpha_mask != 0 ? texel.a : dot(texel.rgb, vec3(0.299, 0.587, 0.114)) * texel.a;
         fill = vec4(u_tint.rgb * coverage, coverage * u_tint.a);
     } else {
         fill = texel * u_tint;
     }
     if (u_scrim_enabled == 1) {
-        vec2 scrim_uv = clamp(v_local / max(u_size, vec2(1.0)), vec2(0.0), vec2(1.0));
-        vec4 scrim = scrim_fill(clamp(dot(scrim_uv, u_scrim_direction), 0.0, 1.0));
+        highp vec2 scrim_uv = clamp(v_local / max(u_size, vec2(1.0)), vec2(0.0), vec2(1.0));
+        lowp vec4 scrim = scrim_fill(clamp(dot(scrim_uv, u_scrim_direction), 0.0, 1.0));
         fill.rgb = mix(fill.rgb, scrim.rgb, clamp(scrim.a, 0.0, 1.0));
     }
     fill *= vec4(1.0, 1.0, 1.0, u_opacity);
 
     if (u_border_width <= 0.0 || u_border_color.a <= 0.0) {
-        float a = fill.a * outer_coverage;
+        lowp float a = fill.a * outer_coverage;
         gl_FragColor = vec4(fill.rgb * a, a);
         return;
     }
 
-    float inner_radius = max(radius - u_border_width, 0.0);
-    vec2 inner_half = max(u_size * 0.5 - vec2(u_border_width), vec2(0.0));
-    float inner_distance = rounded_rect_distance(centered, inner_half, inner_radius);
-    float inner_coverage = 1.0 - smoothstep(-aa, aa, inner_distance);
+    highp float inner_radius = max(radius - u_border_width, 0.0);
+    highp vec2 inner_half = max(u_size * 0.5 - vec2(u_border_width), vec2(0.0));
+    highp float inner_distance = rounded_rect_distance(centered, inner_half, inner_radius);
+    lowp float inner_coverage = 1.0 - smoothstep(-aa, aa, inner_distance);
 
     // Match the rect shader: the border is a stroke ring, not a full-area
     // backplane behind transparent image pixels.
-    vec3 border_pm = u_border_color.rgb * u_border_color.a * u_opacity;
-    float border_a = u_border_color.a * u_opacity;
-    vec3 fill_pm = fill.rgb * fill.a;
+    lowp vec3 border_pm = u_border_color.rgb * u_border_color.a * u_opacity;
+    lowp float border_a = u_border_color.a * u_opacity;
+    lowp vec3 fill_pm = fill.rgb * fill.a;
 
-    vec3 interior_rgb = mix(border_pm, fill_pm, inner_coverage);
-    float interior_a = mix(border_a, fill.a, inner_coverage);
+    lowp vec3 interior_rgb = mix(border_pm, fill_pm, inner_coverage);
+    lowp float interior_a = mix(border_a, fill.a, inner_coverage);
 
-    float out_a = interior_a * outer_coverage;
+    lowp float out_a = interior_a * outer_coverage;
     gl_FragColor = vec4(interior_rgb * outer_coverage, out_a);
 }
 )";

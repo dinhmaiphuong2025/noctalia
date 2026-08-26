@@ -39,18 +39,18 @@ void main() {
   // Both paths output premultiplied to match the pipeline-wide
   // GL_ONE / GL_ONE_MINUS_SRC_ALPHA blend mode.
   constexpr char kFragmentShaderSource[] = R"(
-precision highp float;
+precision mediump float;
 
 uniform sampler2D u_texture;
-uniform float u_opacity;
-uniform vec4 u_tint;        // straight (non-premul) rgba
-uniform float u_tint_mode;  // 0 = RGBA texture, 1 = alpha coverage + u_tint
-varying vec2 v_texcoord;
+uniform lowp float u_opacity;
+uniform lowp vec4 u_tint;        // straight (non-premul) rgba
+uniform lowp float u_tint_mode;  // 0 = RGBA texture, 1 = alpha coverage + u_tint
+varying highp vec2 v_texcoord;
 
 void main() {
-    vec4 c = texture2D(u_texture, v_texcoord);
+    lowp vec4 c = texture2D(u_texture, v_texcoord);
     if (u_tint_mode > 0.5) {
-        float coverage = c.a * u_tint.a * u_opacity;
+        lowp float coverage = c.a * u_tint.a * u_opacity;
         gl_FragColor = vec4(u_tint.rgb * coverage, coverage);
     } else {
         gl_FragColor = vec4(c.rgb * u_opacity, c.a * u_opacity);

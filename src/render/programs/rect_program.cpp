@@ -293,7 +293,8 @@ void main() {
         }
         float out_alpha = u_color.a * shadow_coverage;
         if (out_alpha <= 0.0) {
-            discard;
+            gl_FragColor = vec4(0.0);
+            return;
         }
         gl_FragColor = vec4(u_color.rgb * out_alpha, out_alpha);
         return;
@@ -312,7 +313,8 @@ void main() {
     if (u_border_width <= 0.0 || u_border_color.a <= 0.0) {
         float out_alpha = fill_base.a * outer_coverage;
         if (out_alpha <= 0.0) {
-            discard;
+            gl_FragColor = vec4(0.0);
+            return;
         }
         gl_FragColor = vec4(fill_base.rgb * out_alpha, out_alpha);
         return;
@@ -335,7 +337,8 @@ void main() {
         float ring_coverage = outer_coverage * (1.0 - inner_coverage);
         float out_alpha = u_border_color.a * ring_coverage;
         if (out_alpha <= 0.0) {
-            discard;
+            gl_FragColor = vec4(0.0);
+            return;
         }
         gl_FragColor = vec4(u_border_color.rgb * out_alpha, out_alpha);
         return;
@@ -354,7 +357,8 @@ void main() {
     // Apply outer shape mask
     float out_alpha = interior_a * outer_coverage;
     if (out_alpha <= 0.0) {
-        discard;
+        gl_FragColor = vec4(0.0);
+        return;
     }
 
     // Output premultiplied alpha

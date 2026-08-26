@@ -2212,7 +2212,7 @@ void PanelManager::applyPanelCompositorBlur(
   // The blur region is compositor surface state, not a scene node. Callers pass the
   // same body and clip rectangles used by the reveal animation so protocol state
   // cannot get ahead of scene rendering.
-  if (m_surface == nullptr || m_activePanel == nullptr) {
+  if (m_surface == nullptr || m_activePanel == nullptr || !m_surface->supportsBlurRegion()) {
     return;
   }
 
@@ -2698,18 +2698,23 @@ void PanelManager::prepareFrame(bool needsUpdate, bool needsLayout) {
   const auto width = m_surface->width();
   const auto height = m_surface->height();
 
+  // If a reveal animation is currently in flight, skip rebuild/relayout to avoid
+  // dropping frames during the sliding transition.
+  const bool isAnimatingReveal = (m_attachedToBar && m_attachedRevealProgress < 0.999F)
+      || (!m_attachedToBar && m_detachedRevealProgress < 0.999F);
+
   const bool needsSceneBuild = m_sceneRoot == nullptr
-      || static_cast<std::uint32_t>(std::round(m_sceneRoot->width())) != width
-      || static_cast<std::uint32_t>(std::round(m_sceneRoot->height())) != height;
+      || (!isAnimatingReveal && (static_cast<std::uint32_t>(std::round(m_sceneRoot->width())) != width
+                                 || static_cast<std::uint32_t>(std::round(m_sceneRoot->height())) != height));
   if (needsSceneBuild) {
     buildScene(width, height);
   }
 
-  if (!needsSceneBuild && needsUpdate) {
+  if (!needsSceneBuild && !isAnimatingReveal && needsUpdate) {
     UiPhaseScope updatePhase(UiPhase::Update);
     m_activePanel->update(renderer);
   }
-  if (!needsSceneBuild && needsLayout) {
+  if (!needsSceneBuild && !isAnimatingReveal && needsLayout) {
     UiPhaseScope layoutPhase(UiPhase::Layout);
     if (m_activePanel != nullptr) {
       m_activePanel->layout(renderer, m_contentWidth, m_contentHeight);
@@ -2718,7 +2723,7 @@ void PanelManager::prepareFrame(bool needsUpdate, bool needsLayout) {
       m_inputDispatcher.syncPointerHover();
     }
   }
-  if (!needsSceneBuild && (needsUpdate || needsLayout)) {
+  if (!needsSceneBuild && !isAnimatingReveal && (needsUpdate || needsLayout)) {
     applyPendingPanelFocus();
   }
 }

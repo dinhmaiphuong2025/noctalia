@@ -3166,7 +3166,7 @@ void Bar::syncBarSlideLayerTransform(BarInstance& instance) const {
 }
 
 void Bar::applyBarCompositorBlur(BarInstance& instance) const {
-  if (instance.surface == nullptr) {
+  if (instance.surface == nullptr || !instance.surface->supportsBlurRegion()) {
     return;
   }
   if (!barContentVisuallyShown(instance)) {

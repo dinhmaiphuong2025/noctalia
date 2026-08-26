@@ -165,7 +165,7 @@ namespace shell::dock {
   }
 
   void applyDockCompositorBlur(DockInstance& instance, const DockConfig& cfg) {
-    if (instance.surface == nullptr) {
+    if (instance.surface == nullptr || instance.panel == nullptr || !instance.surface->supportsBlurRegion()) {
       return;
     }
     // Compositor blur is independent of scene opacity — clear it while auto-hide

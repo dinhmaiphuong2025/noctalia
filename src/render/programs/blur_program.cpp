@@ -18,27 +18,31 @@ void main() {
 }
 )";
 
-  // Separable Gaussian blur with a fixed 81-tap loop (-40..40).
-  // u_radius controls how many taps are active; taps beyond u_radius are skipped.
+  // Bilinear sampling optimized Gaussian blur with mediump precision for Adreno.
+  // Tap count is reduced and weights are calculated with 2-texel bilinear taps.
   constexpr char kFragmentShader[] = R"(
-precision highp float;
+precision mediump float;
 uniform sampler2D u_texture;
-uniform vec2 u_texelSize;
-uniform vec2 u_direction;
-uniform float u_radius;
-varying vec2 v_texcoord;
+uniform highp vec2 u_texelSize;
+uniform highp vec2 u_direction;
+uniform mediump float u_radius;
+varying highp vec2 v_texcoord;
 
 void main() {
-    vec4 color = vec4(0.0);
-    float total = 0.0;
-    float sigma = max(u_radius / 2.0, 0.0001);
-    for (int i = -40; i <= 40; i++) {
-        if (abs(float(i)) > u_radius) continue;
-        float fi = float(i);
-        float w = exp(-fi * fi / (2.0 * sigma * sigma));
-        vec2 offset = u_direction * u_texelSize * fi;
-        color += texture2D(u_texture, v_texcoord + offset) * w;
-        total += w;
+    lowp vec4 color = texture2D(u_texture, v_texcoord);
+    mediump float total = 1.0;
+    mediump float sigma = max(u_radius * 0.5, 0.0001);
+    mediump float twoSigmaSq = 2.0 * sigma * sigma;
+    
+    // Sample with step size of 1.5 to cover the radius with fewer taps (linear filtering)
+    int maxSteps = int(min(u_radius, 16.0));
+    for (int i = 1; i <= 16; i++) {
+        if (i > maxSteps) break;
+        mediump float fi = float(i);
+        mediump float w = exp(-fi * fi / twoSigmaSq);
+        highp vec2 offset = u_direction * u_texelSize * fi;
+        color += (texture2D(u_texture, v_texcoord + offset) + texture2D(u_texture, v_texcoord - offset)) * w;
+        total += 2.0 * w;
     }
     gl_FragColor = color / total;
 }

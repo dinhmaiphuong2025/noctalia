@@ -84,6 +84,7 @@ public:
   void setScaleChangedCallback(ScaleChangedCallback callback);
   void setOutputChangedCallback(OutputChangedCallback callback);
   void setInputRegion(const std::vector<InputRect>& rects);
+  [[nodiscard]] bool supportsBlurRegion() const noexcept;
   void setBlurRegion(const std::vector<InputRect>& rects);
   void clearBlurRegion();
   void setDebugName(std::string name);

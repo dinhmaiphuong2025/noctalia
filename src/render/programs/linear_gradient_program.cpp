@@ -26,16 +26,16 @@ void main() {
 )";
 
   constexpr char kFragmentShaderSource[] = R"(
-precision highp float;
+precision mediump float;
 
-uniform vec4 u_start_color;
-uniform vec4 u_end_color;
-uniform vec2 u_direction;
-varying vec2 v_uv;
+uniform lowp vec4 u_start_color;
+uniform lowp vec4 u_end_color;
+uniform mediump vec2 u_direction;
+varying mediump vec2 v_uv;
 
 void main() {
-    float t = clamp(dot(v_uv, u_direction), 0.0, 1.0);
-    vec4 color = mix(u_start_color, u_end_color, t);
+    mediump float t = clamp(dot(v_uv, u_direction), 0.0, 1.0);
+    lowp vec4 color = mix(u_start_color, u_end_color, t);
     gl_FragColor = vec4(color.rgb * color.a, color.a);
 }
 )";
