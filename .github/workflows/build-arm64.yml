@@ -15,7 +15,9 @@ concurrency:
 jobs:
   build:
     name: Build noctalia (arm64)
-    runs-on: ubuntu-26.04-arm
+    runs-on: ubuntu-24.04-arm
+    container:
+      image: debian:trixie
 
     steps:
       - uses: actions/checkout@v6
@@ -36,59 +38,53 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y \
-            meson g++-14 just ninja-build \
+          apt-get update -y
+          apt-get install -y \
+            meson g++ just ninja-build \
             libwayland-dev wayland-protocols \
             libegl-dev libgles-dev \
             libfreetype-dev libfontconfig-dev \
             libcairo2-dev libpango1.0-dev libharfbuzz-dev \
             libxkbcommon-dev libglib2.0-dev \
             libsecret-1-dev libsodium-dev \
-            libsdbus-c++-dev libpipewire-0.3-dev \
+            libpipewire-0.3-dev \
             libspa-0.2-dev \
             libpam0g-dev libpolkit-agent-1-dev libpolkit-gobject-1-dev \
             libwebp-dev libjxl-dev libsndfile1-dev librsvg2-dev \
             libqalculate-dev libxml2-dev libcurl4-gnutls-dev \
             libmd4c-dev libtomlplusplus-dev libical-dev \
             nlohmann-json3-dev libstb-dev libjemalloc-dev \
-            git pkg-config python3 python3-pip \
-            libglib2.0-dev \
-            gcc-14 g++-14
-
-      - name: Setup g++-14
-        run: |
-          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-14 100
-          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-14 100
-          c++ --version
+            git pkg-config python3 python3-pip cmake ca-certificates \
+            curl gh
 
       - name: Build & install wireplumber 0.5
         run: |
           git clone --depth 1 --branch 0.5.10 https://gitlab.freedesktop.org/pipewire/wireplumber.git /tmp/wireplumber
           cd /tmp/wireplumber
-          meson setup build --prefix=/usr
+          meson setup build --prefix=/usr/local
           ninja -C build
-          sudo ninja -C build install
-          sudo ldconfig
+          ninja -C build install
+          ldconfig
           pkg-config --modversion wireplumber-0.5
 
       - name: Build & install sdbus-c++ v2.3.1
         run: |
           git clone --depth 1 --branch v2.3.1 https://github.com/Kistler-Group/sdbus-cpp.git /tmp/sdbus-cpp
           cd /tmp/sdbus-cpp
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
           cmake --build build -j$(nproc)
-          sudo cmake --install build
-          sudo ldconfig
+          cmake --install build
+          ldconfig
 
       - name: Install stb headers
         run: |
-          sudo curl -L -o /usr/include/stb/stb_image_resize2.h https://raw.githubusercontent.com/nothings/stb/master/stb_image_resize2.h
-          sudo curl -L -o /usr/include/stb/stb_image_write.h https://raw.githubusercontent.com/nothings/stb/master/stb_image_write.h
-          sudo curl -L -o /usr/include/stb/stb_image.h https://raw.githubusercontent.com/nothings/stb/master/stb_image.h
+          mkdir -p /usr/include/stb
+          curl -L -o /usr/include/stb/stb_image_resize2.h https://raw.githubusercontent.com/nothings/stb/master/stb_image_resize2.h
+          curl -L -o /usr/include/stb/stb_image_write.h https://raw.githubusercontent.com/nothings/stb/master/stb_image_write.h
+          curl -L -o /usr/include/stb/stb_image.h https://raw.githubusercontent.com/nothings/stb/master/stb_image.h
 
       - name: Setup meson
-        run: meson setup build --prefix=/usr/local --buildtype=release
+        run: meson setup build --prefix=/usr/local --buildtype=release -Dcpp_link_args="-Wl,-rpath,/usr/local/lib"
 
       - name: Build
         run: ninja -C build
@@ -96,6 +92,10 @@ jobs:
       - name: Install to staging
         run: |
           DESTDIR=$(pwd)/install ninja -C build install
+          # Bundle sdbus-c++ and wireplumber libraries into /usr/local/lib
+          mkdir -p $(pwd)/install/usr/local/lib
+          cp -a /usr/local/lib/libsdbus-c++* $(pwd)/install/usr/local/lib/ 2>/dev/null || true
+          cp -a /usr/local/lib/libwireplumber* $(pwd)/install/usr/local/lib/ 2>/dev/null || true
           # Also ensure assets are mirrored in /usr/share for compatibility
           mkdir -p $(pwd)/install/usr/share
           cp -r $(pwd)/install/usr/local/share/noctalia $(pwd)/install/usr/share/ 2>/dev/null || true
