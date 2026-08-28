@@ -27,7 +27,7 @@ jobs:
           apt-get update -y
           apt-get install -y \
             meson g++ just ninja-build \
-            libwayland-dev wayland-protocols \
+            libwayland-dev libwayland-bin wayland-protocols \
             libegl-dev libgles-dev \
             libfreetype-dev libfontconfig-dev \
             libcairo2-dev libpango1.0-dev libharfbuzz-dev \
