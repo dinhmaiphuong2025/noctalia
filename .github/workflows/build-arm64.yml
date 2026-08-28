@@ -12,15 +12,32 @@ concurrency:
 
 jobs:
   build:
-    name: Build noctalia (arm64)
+    name: Build noctalia (${{ matrix.distro }})
     runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: ubuntu26
+            image: ubuntu:26.04
+            pkg_mgr: apt
+          - distro: debian13
+            image: debian:trixie
+            pkg_mgr: apt
+          - distro: fedora44
+            image: fedora:44
+            pkg_mgr: dnf
+          - distro: arch
+            image: archlinux:latest
+            pkg_mgr: pacman
     container:
-      image: debian:trixie
+      image: ${{ matrix.image }}
 
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install dependencies
+      - name: Install dependencies (APT)
+        if: matrix.pkg_mgr == 'apt'
         run: |
           apt-get update -y
           apt-get install -y \
@@ -41,13 +58,53 @@ jobs:
             git pkg-config python3 python3-pip cmake ca-certificates \
             curl gh
 
+      - name: Install dependencies (DNF)
+        if: matrix.pkg_mgr == 'dnf'
+        run: |
+          dnf install -y \
+            meson gcc-c++ just ninja-build \
+            wayland-devel wayland-protocols-devel \
+            libEGL-devel mesa-libGLES-devel \
+            freetype-devel fontconfig-devel \
+            cairo-devel pango-devel harfbuzz-devel \
+            libxkbcommon-devel glib2-devel \
+            libsecret-devel libsodium-devel systemd-devel \
+            pipewire-devel \
+            pam-devel polkit-devel libcurl-devel \
+            libwebp-devel libjxl-devel libsndfile-devel librsvg2-devel \
+            libqalculate-devel libxml2-devel \
+            md4c-devel tomlplusplus-devel libical-devel \
+            json-devel stb_image_resize2-devel stb_image_write-devel \
+            jemalloc-devel \
+            git pkgconfig python3 cmake ca-certificates \
+            curl gh
+
+      - name: Install dependencies (PACMAN)
+        if: matrix.pkg_mgr == 'pacman'
+        run: |
+          pacman -Sy --noconfirm --needed \
+            meson gcc just ninja \
+            wayland wayland-protocols libglvnd \
+            freetype2 fontconfig \
+            cairo pango harfbuzz \
+            libxkbcommon glib2 \
+            libsecret libsodium systemd-libs \
+            pipewire \
+            pam polkit curl \
+            libwebp libjxl libsndfile librsvg \
+            libqalculate libxml2 \
+            md4c tomlplusplus libical \
+            nlohmann-json stb \
+            jemalloc \
+            git pkgconf python cmake ca-certificates \
+            curl github-cli
+
       - name: Patch wl_proxy_get_display (removed in Wayland 1.22)
         run: |
           python3 -c "
           import re
           with open('src/wayland/virtual_keyboard_service.cpp', 'r') as f:
               content = f.read()
-          # Remove the wl_proxy_get_display block
           pattern = r'\n\s+auto\* display = wl_proxy_get_display.*?\n\s+if \(display != nullptr\) \{\n\s+\(void\)wl_display_flush\(display\);\n\s+\}'
           content = re.sub(pattern, '', content, flags=re.DOTALL)
           with open('src/wayland/virtual_keyboard_service.cpp', 'w') as f:
@@ -69,7 +126,7 @@ jobs:
           meson setup build --prefix=/usr/local
           ninja -C build
           ninja -C build install
-          ldconfig
+          ldconfig || true
           pkg-config --modversion wireplumber-0.5
 
       - name: Build & install sdbus-c++ v2.3.1
@@ -79,7 +136,7 @@ jobs:
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
           cmake --build build -j$(nproc)
           cmake --install build
-          ldconfig
+          ldconfig || true
 
       - name: Install stb headers
         run: |
@@ -97,11 +154,9 @@ jobs:
       - name: Install to staging
         run: |
           DESTDIR=$(pwd)/install ninja -C build install
-          # Bundle sdbus-c++ and wireplumber libraries into /usr/local/lib
           mkdir -p $(pwd)/install/usr/local/lib
-          cp -a /usr/local/lib/libsdbus-c++* $(pwd)/install/usr/local/lib/ 2>/dev/null || true
-          cp -a /usr/local/lib/libwireplumber* $(pwd)/install/usr/local/lib/ 2>/dev/null || true
-          # Also ensure assets are mirrored in /usr/share for compatibility
+          cp -a /usr/local/lib/libsdbus-c++* $(pwd)/install/usr/local/lib/ 2>/dev/null || cp -a /usr/local/lib64/libsdbus-c++* $(pwd)/install/usr/local/lib/ 2>/dev/null || true
+          cp -a /usr/local/lib/libwireplumber* $(pwd)/install/usr/local/lib/ 2>/dev/null || cp -a /usr/local/lib64/libwireplumber* $(pwd)/install/usr/local/lib/ 2>/dev/null || true
           mkdir -p $(pwd)/install/usr/share
           cp -r $(pwd)/install/usr/local/share/noctalia $(pwd)/install/usr/share/ 2>/dev/null || true
           mkdir -p $(pwd)/install/usr/bin
@@ -110,18 +165,37 @@ jobs:
       - name: Create artifact
         run: |
           cd $(pwd)/install
-          tar czf ../noctalia-arm64.tar.gz .
+          tar czf ../noctalia-${{ matrix.distro }}-arm64.tar.gz .
           cd ..
-          ls -lh noctalia-arm64.tar.gz
+          ls -lh noctalia-${{ matrix.distro }}-arm64.tar.gz
 
       - uses: actions/upload-artifact@v4
         with:
-          name: noctalia-arm64
-          path: noctalia-arm64.tar.gz
+          name: noctalia-${{ matrix.distro }}-arm64
+          path: noctalia-${{ matrix.distro }}-arm64.tar.gz
           if-no-files-found: error
 
+  publish:
+    name: Publish rolling release
+    needs: build
+    runs-on: ubuntu-24.04
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release_files
+          cp artifacts/*/*.tar.gz release_files/
+          # Create noctalia-arm64.tar.gz as default/backward-compatible fallback (from ubuntu26)
+          cp release_files/noctalia-ubuntu26-arm64.tar.gz release_files/noctalia-arm64.tar.gz
+          ls -la release_files/
+
       - name: Publish rolling release
-        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -130,7 +204,8 @@ jobs:
           git push --delete origin noctalia-arm64 2>/dev/null || true
           gh release create noctalia-arm64 \
             --repo ${{ github.repository }} \
-            --title "noctalia-arm64 (Rolling)" \
-            --notes "Rolling release artifact compiled from $(git rev-parse --short HEAD)" \
+            --title "noctalia-arm64 (Rolling Multi-Distro)" \
+            --notes "Rolling release artifacts compiled for Ubuntu 26, Debian 13, Fedora 44, and Arch ARM64 from $(git rev-parse --short HEAD)" \
             --latest=false \
-            noctalia-arm64.tar.gz
+            release_files/*.tar.gz
+
