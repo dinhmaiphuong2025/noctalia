@@ -57,6 +57,13 @@ jobs:
           print('Patched virtual_keyboard_service.cpp')
           "
 
+      - name: Upgrade wayland-protocols to 1.49
+        run: |
+          git clone --depth 1 --branch 1.49 https://gitlab.freedesktop.org/wayland/wayland-protocols.git /tmp/wayland-protocols
+          cd /tmp/wayland-protocols
+          meson setup build --prefix=/usr
+          ninja -C build install
+
       - name: Build & install wireplumber 0.5
         run: |
           git clone --depth 1 --branch 0.5.10 https://gitlab.freedesktop.org/pipewire/wireplumber.git /tmp/wireplumber
