@@ -179,7 +179,7 @@ jobs:
     name: Publish rolling release
     needs: build
     runs-on: ubuntu-24.04
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/droidspaces' || github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v6
 
