@@ -42,6 +42,7 @@ jobs:
       - name: Install dependencies (PACMAN base)
         if: matrix.pkg_mgr == 'pacman'
         run: |
+          sed -i "s/#DisableSandbox/DisableSandbox/g" /etc/pacman.conf || echo "DisableSandbox" >> /etc/pacman.conf
           pacman -Syu --noconfirm --overwrite "*" && pacman -S --noconfirm --needed tar gzip coreutils glibc
 
       - uses: actions/checkout@v4
