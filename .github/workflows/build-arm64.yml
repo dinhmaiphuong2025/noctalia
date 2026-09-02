@@ -137,7 +137,7 @@ jobs:
           ninja -C build
           ninja -C build install
           ldconfig || true
-          pkg-config --modversion wireplumber-0.5
+          PKG_CONFIG_PATH=/usr/local/lib/pkgconfig pkg-config --modversion wireplumber-0.5
 
       - name: Build & install sdbus-c++ v2.3.1
         run: |
