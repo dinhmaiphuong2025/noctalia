@@ -156,7 +156,7 @@ jobs:
           curl -L -o /usr/include/stb/stb_image.h https://raw.githubusercontent.com/nothings/stb/master/stb_image.h
 
       - name: Setup meson
-        run: meson setup build --prefix=/usr/local --buildtype=release -Dcpp_link_args="-Wl,-rpath,/usr/local/lib"
+        run: PKG_CONFIG_PATH=/usr/local/lib/pkgconfig meson setup build --prefix=/usr/local --buildtype=release -Dcpp_link_args="-Wl,-rpath,/usr/local/lib"
 
       - name: Build
         run: ninja -C build
