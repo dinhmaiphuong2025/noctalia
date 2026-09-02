@@ -42,7 +42,7 @@ jobs:
       - name: Install dependencies (PACMAN base)
         if: matrix.pkg_mgr == 'pacman'
         run: |
-          pacman -Sy --noconfirm --needed tar gzip coreutils glibc
+          pacman -Syu --noconfirm --overwrite "*" && pacman -S --noconfirm --needed tar gzip coreutils glibc
 
       - uses: actions/checkout@v4
 
