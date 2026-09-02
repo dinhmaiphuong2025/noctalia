@@ -33,7 +33,7 @@ jobs:
             image: fedora:44
             pkg_mgr: dnf
           - distro: arch
-            image: archlinux:latest
+            image: lopsided/archlinux:latest
             pkg_mgr: pacman
     container:
       image: ${{ matrix.image }}
