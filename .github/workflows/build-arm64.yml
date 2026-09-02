@@ -42,7 +42,7 @@ jobs:
       - name: Install dependencies (PACMAN base)
         if: matrix.pkg_mgr == 'pacman'
         run: |
-          pacman -Sy --noconfirm --needed tar gzip xz bzip2 coreutils git pkgconf python cmake ca-certificates curl
+          pacman -Sy --noconfirm --needed tar gzip xz bzip2 coreutils git pkgconf python cmake ca-certificates curl jq base-devel zstd gawk diffutils grep gzip perl sed less sudo
 
       - uses: actions/checkout@v4
 
