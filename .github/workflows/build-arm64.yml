@@ -98,7 +98,7 @@ jobs:
             wayland wayland-protocols libglvnd \
             freetype2 fontconfig \
             cairo pango harfbuzz \
-            libxkbcommon glib2 \
+            libxkbcommon glib2-devel \
             libsecret libsodium systemd-libs \
             pipewire \
             pam polkit curl \
