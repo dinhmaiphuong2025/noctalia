@@ -33,12 +33,17 @@ jobs:
             image: fedora:44
             pkg_mgr: dnf
           - distro: arch
-            image: lopsided/archlinux:latest
+            image: lopsided/archlinux:devel
             pkg_mgr: pacman
     container:
       image: ${{ matrix.image }}
 
     steps:
+      - name: Install dependencies (PACMAN base)
+        if: matrix.pkg_mgr == 'pacman'
+        run: |
+          pacman -Sy --noconfirm --needed tar gzip xz bzip2 coreutils git pkgconf python cmake ca-certificates curl
+
       - uses: actions/checkout@v4
 
       - name: Install dependencies (APT)
@@ -101,8 +106,7 @@ jobs:
             md4c tomlplusplus libical \
             nlohmann-json stb \
             jemalloc \
-            git pkgconf python cmake ca-certificates \
-            curl github-cli
+            github-cli
 
       - name: Patch wl_proxy_get_display (removed in Wayland 1.22)
         run: |
