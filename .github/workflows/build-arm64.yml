@@ -2,6 +2,11 @@ name: build-arm64
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+      - droidspaces
+  pull_request:
 
 permissions:
   contents: write
@@ -34,7 +39,7 @@ jobs:
       image: ${{ matrix.image }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Install dependencies (APT)
         if: matrix.pkg_mgr == 'apt'
@@ -181,7 +186,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/droidspaces' || github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
         with:
@@ -208,4 +213,3 @@ jobs:
             --notes "Rolling release artifacts compiled for Ubuntu 26, Debian 13, Fedora 44, and Arch ARM64 from $(git rev-parse --short HEAD)" \
             --latest=false \
             release_files/*.tar.gz
-
