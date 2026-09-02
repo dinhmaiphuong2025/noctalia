@@ -73,10 +73,6 @@ void main() {
     coverage = 1.0 - (1.0 - coverage) * (1.0 - halo);
 
     float alpha = clamp(coverage, 0.0, 1.0) * u_color.a;
-    if (alpha <= 0.0) {
-        discard;
-    }
-
     vec3 litColor = mix(u_color.rgb, vec3(1.0), headMask * 0.14);
     gl_FragColor = vec4(litColor * alpha, alpha);
 }

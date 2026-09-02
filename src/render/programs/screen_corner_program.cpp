@@ -64,9 +64,6 @@ void main() {
     float pixel_width = max(length(vec2(dFdx(shape), dFdy(shape))), 1e-6);
     float coverage = clamp(0.5 + shape / pixel_width, 0.0, 1.0);
     float alpha = u_color.a * coverage;
-    if (alpha <= 0.0) {
-        discard;
-    }
     gl_FragColor = vec4(u_color.rgb * alpha, alpha);
 }
 )";

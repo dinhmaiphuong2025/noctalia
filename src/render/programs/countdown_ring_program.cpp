@@ -59,10 +59,6 @@ void main() {
     float arcMask = 1.0 - smoothstep(arcLen - 0.06, arcLen + 0.06, rel);
 
     float alpha = ringMask * arcMask * u_color.a;
-    if (alpha <= 0.0) {
-        discard;
-    }
-
     gl_FragColor = vec4(u_color.rgb * alpha, alpha);
 }
 )";
