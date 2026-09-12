@@ -703,6 +703,15 @@ bool Surface::supportsBlurRegion() const noexcept {
 }
 
 void Surface::setBlurRegion(const std::vector<InputRect>& rects) {
+  // DIAG: disable blur entirely to isolate Noctalia interaction flicker
+  // (widget bar hover triggers blur region updates every frame). If this
+  // eliminates blue wallpaper-only flash, root cause is blur sampling stale
+  // damage / shader cost on Adreno.
+  (void)rects;
+  if (m_backgroundEffect) {
+    ext_background_effect_surface_v1_set_blur_region(m_backgroundEffect, nullptr);
+  }
+  return;
   if (!prepareBlurEffect()) {
     return;
   }
